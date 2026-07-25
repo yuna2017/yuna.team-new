@@ -2664,3 +2664,73 @@
     .login-divider::before,.login-divider::after{content:"";flex:1;height:1px;background:rgba(20,84,150,.16)}
     .fallback-login .btn{width:100%}
     .fallback-login [data-fallback-message]{margin:12px 0 0;color:#c0392b}
+
+    /* 关于协会：往届成员与名人堂默认收起，展开后保留原有筛选和卡片布局。 */
+    .team-collapsible-section{scroll-margin-top:104px}
+    .team-disclosure{
+      overflow:hidden;
+      border:1px solid rgba(177,204,231,.54);
+      border-radius:26px;
+      background:rgba(255,255,255,.54);
+      box-shadow:var(--soft);
+      backdrop-filter:blur(16px);
+    }
+    .team-disclosure-summary{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:24px;
+      min-height:116px;
+      padding:24px 28px;
+      cursor:pointer;
+      list-style:none;
+    }
+    .team-disclosure-summary::-webkit-details-marker{display:none}
+    .team-disclosure-summary::marker{display:none}
+    .team-disclosure-summary:focus-visible{
+      outline:3px solid rgba(10,141,219,.36);
+      outline-offset:-5px;
+    }
+    .team-disclosure-summary .section-title{
+      flex:1;
+      min-width:0;
+      margin:0;
+    }
+    .team-disclosure-summary .section-title .eyebrow{margin-bottom:8px}
+    .team-disclosure-summary .section-title h2{font-size:clamp(32px,4vw,52px)}
+    .team-disclosure-toggle{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      gap:12px;
+      color:var(--blue-ink);
+      font-size:14px;
+      font-weight:950;
+      white-space:nowrap;
+    }
+    .team-disclosure-toggle i{
+      width:12px;
+      height:12px;
+      border-right:2px solid currentColor;
+      border-bottom:2px solid currentColor;
+      transform:rotate(45deg) translateY(-3px);
+      transition:transform .2s ease;
+    }
+    .team-disclosure[open] .team-disclosure-toggle i{transform:rotate(225deg) translate(-2px,-2px)}
+    .team-disclosure[open] .team-disclosure-toggle span{font-size:0}
+    .team-disclosure[open] .team-disclosure-toggle span::after{content:"收起";font-size:14px}
+    .team-disclosure-content{
+      padding:24px 28px 28px;
+      border-top:1px solid rgba(177,204,231,.34);
+    }
+    @media(max-width:760px){
+      .team-disclosure-summary{
+        min-height:92px;
+        gap:14px;
+        padding:18px;
+      }
+      .team-disclosure-summary .section-title h2{font-size:28px!important}
+      .team-disclosure-toggle{gap:8px;font-size:13px}
+      .team-disclosure[open] .team-disclosure-toggle span::after{font-size:13px}
+      .team-disclosure-content{padding:18px}
+    }
