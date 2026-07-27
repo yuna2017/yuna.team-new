@@ -10,6 +10,11 @@ interface PostMetaRow {
 
 const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "DELETE", "PATCH"]);
 
+// 有对应静态详情页的部门。/page?p=departments/<key> 是旧站遗留的第二个入口，
+// 与 /department-<key> 渲染同一条 D1 记录，需要 301 收口。列成白名单而不是
+// 正则通配：将来多出一条没有静态页的 departments/* 记录时，不会跳到 404。
+const DEPARTMENT_PAGES = new Set(["dev", "ops", "publicity", "security"]);
+
 export const onRequest: PagesFunction<Env> = async ({ request, env, next }) => {
   const url = new URL(request.url);
 
@@ -22,6 +27,19 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, next }) => {
       return new Response(JSON.stringify({ error: "跨站请求被拒绝" }), {
         status: 403,
         headers: { "content-type": "application/json; charset=utf-8" },
+      });
+    }
+  }
+
+  // 部门旧入口 301 到静态详情页。用相对 Location 而不是拼绝对地址：
+  // 站点挂在多个 CNAME 上，还可能经外部 CDN 回源，相对地址由客户端按
+  // 实际访问的域名解析，不会把用户甩到另一个域名去。
+  if (/^\/page(\.html)?$/.test(url.pathname) && request.method === "GET") {
+    const department = /^departments\/([a-z]+)$/.exec((url.searchParams.get("p") || "").trim())?.[1];
+    if (department && DEPARTMENT_PAGES.has(department)) {
+      return new Response(null, {
+        status: 301,
+        headers: { location: `/department-${department}` },
       });
     }
   }
