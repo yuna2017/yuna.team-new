@@ -28,37 +28,24 @@ interface PostRow {
   lastmod: string | null;
 }
 
-interface PageRow {
-  key: string;
-  updated_at: string | null;
-}
-
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   // 用 PUBLIC_BASE_URL 而不是请求域名：站点挂在多个 CNAME 上，
   // sitemap 必须只列 canonical 指向的那个域名，否则等于向 Google 提交重复站点。
   const base = (env.PUBLIC_BASE_URL || new URL(request.url).origin).replace(/\/+$/, "");
 
+  // 不收录 /page?p=：仅存的 page 记录是 departments/*，而它们的内容已经由
+  // /department-* 四个静态页渲染，两处提交等于重复收录。
   // D1 查询失败时降级成只有静态页的 sitemap，而不是整个 500——
   // 半份 sitemap 对搜索引擎仍然有效，返回错误则连首页都提交不上去。
-  const [posts, pages] = await Promise.all([
-    // 知识库已外链到 docs.yuna.team，本站只收 article。
-    env.BLOG_DB.prepare(
-      `SELECT slug, COALESCE(published_at, updated_at) AS lastmod
-         FROM posts
-        WHERE kind = 'article' AND status = 'published'
-        ORDER BY COALESCE(published_at, updated_at) DESC`,
-    )
-      .all<PostRow>()
-      .catch(() => null),
-    env.BLOG_DB.prepare(
-      `SELECT key, updated_at
-         FROM site_records
-        WHERE kind = 'markdown' AND key LIKE 'page:%'
-        ORDER BY updated_at DESC`,
-    )
-      .all<PageRow>()
-      .catch(() => null),
-  ]);
+  // 知识库已外链到 docs.yuna.team，本站只收 article。
+  const posts = await env.BLOG_DB.prepare(
+    `SELECT slug, COALESCE(published_at, updated_at) AS lastmod
+       FROM posts
+      WHERE kind = 'article' AND status = 'published'
+      ORDER BY COALESCE(published_at, updated_at) DESC`,
+  )
+    .all<PostRow>()
+    .catch(() => null);
 
   const entries: SitemapEntry[] = [
     ...STATIC_ENTRIES,
@@ -67,14 +54,6 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
       lastmod: row.lastmod,
       changefreq: "monthly",
       priority: "0.8",
-    })),
-    ...(pages?.results ?? []).map((row) => ({
-      // 保留路径分隔符不编码，与 app.js 生成的站内链接保持同一种写法，
-      // 否则 docs/intro 会以 ?p=docs/intro 和 ?p=docs%2Fintro 两个 URL 被重复收录。
-      path: `/page?p=${encodeURIComponent(row.key.replace(/^page:/, "")).replace(/%2F/g, "/")}`,
-      lastmod: row.updated_at,
-      changefreq: "monthly",
-      priority: "0.5",
     })),
   ];
 

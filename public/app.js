@@ -492,11 +492,6 @@ function normalizeInternalHref(href) {
     return `/media/${markdownAsset[1]}.md`;
   }
 
-  const legacyPage = href.match(/^\/(about-us|lessons|join-us)\/(.+)\.html$/);
-  if (legacyPage) {
-    return `/page.html?p=${legacyPage[1]}/${legacyPage[2]}`;
-  }
-
   return href;
 }
 
@@ -2030,16 +2025,9 @@ function updateStaticPageHero(title, key) {
   const heroEyebrow = document.querySelector("[data-page-hero-eyebrow]");
   const heroLead = document.querySelector("[data-page-hero-lead]");
   if (heroTitle) heroTitle.textContent = `${title}。`;
-  if (heroEyebrow) heroEyebrow.textContent = key.includes("about-us") ? "About YUNA" : "Knowledge Base";
-  if (heroLead) heroLead.textContent = pageHeroLead(key);
-}
-
-function pageHeroLead(key) {
-  if (key.includes("about-us")) return "了解协会方向、部门职责、成员故事和长期沉淀的校园技术实践。";
-  if (key.includes("join-us")) return "这里整理招新流程、方向说明和参与方式，方便新同学快速找到入口。";
-  if (key.includes("contact-us")) return "这里整理协会联系方式、社群入口和活动沟通方式。";
-  if (key.includes("services")) return "这里整理协会维护的常用服务、资料归档和站点入口。";
-  return "这里整理授课资料、招新流程、联系方式和协会常用服务，方便新成员从一页开始了解方向与路径。";
+  if (heroEyebrow) heroEyebrow.textContent = "Knowledge Base";
+  if (heroLead) heroLead.textContent = "这里展示协会整理的 Markdown 资料与固定页面内容。";
+  void key;
 }
 
 function resolveStaticMarkdownPage(params) {
@@ -2053,8 +2041,10 @@ function resolveStaticMarkdownPage(params) {
     };
   }
 
-  const page = params.get("p") || "about-us/index";
-  if (!isSafeMarkdownPath(page)) return null;
+  // 不再有默认页：原先兜底的 about-us/index 属于已废弃的旧站页面，已随其余
+  // legacy 记录一起删除。缺 ?p= 时返回 null，交由调用方走"内容不存在"分支。
+  const page = params.get("p");
+  if (!page || !isSafeMarkdownPath(page)) return null;
   return {
     key: page,
     defaultTitle: pageTitleFromPath(page),
@@ -2066,14 +2056,7 @@ function isSafeMarkdownPath(path) {
 }
 
 function pageTitleFromPath(path) {
-  const titles = {
-    "about-us/index": "关于我们",
-    "services/index": "相关服务",
-    "lessons/index": "授课链接",
-    "join-us/how-to": "加入我们",
-    "contact-us/index": "联系我们",
-  };
-  return titles[path] || path.split("/").pop() || "页面";
+  return path.split("/").pop() || "页面";
 }
 
 async function renderSiteRecord(container, key) {
