@@ -54,7 +54,9 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, next }) => {
   const image = post.cover_url && /^(https?:\/\/|\/)/.test(post.cover_url)
     ? new URL(post.cover_url, `${base}/`).toString()
     : `${base}/images/og-image.png`;
-  const pageUrl = `${base}/post.html?slug=${encodeURIComponent(slug)}`;
+  // Pages 会把 /post.html 308 到 /post，canonical 必须写跳转后的地址：
+  // 指向一个会跳转的 URL 时 Google 会忽略 canonical，改用它自己解析的结果。
+  const pageUrl = `${base}/post?slug=${encodeURIComponent(slug)}`;
 
   const setContent = (value: string) => ({
     element(element: Element) {
@@ -74,6 +76,13 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, next }) => {
     .on('meta[property="og:url"]', setContent(pageUrl))
     .on('meta[property="og:image"]', setContent(image))
     .on('meta[property="og:type"]', setContent("article"))
+    // canonical 必须逐篇指向自己：静态模板里所有文章共用一个 href，
+    // 不改写的话搜索引擎会把全部文章折叠成同一个 URL，只收录其中一篇。
+    .on('link[rel="canonical"]', {
+      element(element) {
+        element.setAttribute("href", pageUrl);
+      },
+    })
     .transform(response);
 };
 

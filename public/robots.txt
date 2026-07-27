@@ -1,0 +1,13 @@
+# 除后台外全站开放抓取。
+User-agent: *
+Allow: /
+
+# 后台需要登录，爬虫只会拿到跳登录的 302，没有收录价值。
+# 用 /admin$ 精确匹配而不是 /admin 前缀：前缀会把 /admin-login 一起挡掉，
+# 而那个页面是靠自身的 <meta name="robots" content="noindex"> 退出索引的，
+# 一旦禁止抓取，爬虫读不到该标记，反而可能只凭外链留下一条纯 URL 结果。
+Disallow: /admin$
+Disallow: /admin/
+Disallow: /api/admin/
+
+Sitemap: https://www.yuna.team/sitemap.xml
